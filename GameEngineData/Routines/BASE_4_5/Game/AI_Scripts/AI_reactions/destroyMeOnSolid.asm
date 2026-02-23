@@ -1,2 +1,4 @@
-;;;; destroy this object 
+
+    ;; destroy this object 
     DestroyObject
+

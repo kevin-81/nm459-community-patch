@@ -1,14 +1,15 @@
-;;;; 
-    
+
     STX temp ;; assumes the object we want to move is in x.
-  GetActionStep temp
+
+    GetActionStep temp
     CMP #$07
     BNE +notHurt
         RTS
     +notHurt
    
-        StartMoving temp, #LEFT
-        STX temp ;; assumes the object we want to move is in x.
-        ChangeFacingDirection temp, #FACE_LEFT
+    StartMoving temp, #LEFT
+    ;STX temp
+    ChangeFacingDirection temp, #FACE_LEFT
 
     RTS
+

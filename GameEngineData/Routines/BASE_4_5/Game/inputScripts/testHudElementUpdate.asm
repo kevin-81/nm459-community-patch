@@ -1,3 +1,6 @@
-INC myScore
-UpdateHudElement #$00, myScore
-RTS
+
+    INC myScore
+    UpdateHudElement #$00, myScore
+
+    RTS
+

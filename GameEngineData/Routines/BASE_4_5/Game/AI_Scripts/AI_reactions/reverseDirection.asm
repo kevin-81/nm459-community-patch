@@ -1,5 +1,5 @@
-;;;; reverse direction.
 
+    ;; reverse direction.
     STX temp
     GetActionStep temp
     CMP #$07 ;; we will use action step 7 for hurt.
@@ -12,8 +12,10 @@
         STA Object_v_speed_lo,x
         JMP dontUpdateObjectPosition
     +notHurt
+
     TYA
     PHA
+
     LDA Object_direction,x
     AND #%00000111
     CLC
@@ -21,8 +23,11 @@
     AND #%00000111
     TAY ;; this is the "direction", where
         ;; 0 = down, counterclockwise, 7=down-left
+
     LDA DirectionTableOrdered,y
     ORA FacingTableOrdered,y
     STA Object_direction,x
+
     PLA
     TAY
+
