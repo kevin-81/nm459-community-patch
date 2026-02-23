@@ -278,16 +278,13 @@
 
 
 evaluateTileAgainstCameraPosition:
-
     LDA Object_x_hi,x
     STA pointer
+
     LDA Object_screen,x
     AND #%00001111
     STA pointer+1
     
-    LDA pointer
-    
-                
     Compare16 pointer+1, pointer, camX_hi, camX
     ; arg0 = high byte of first value
     ; arg1 = low byte of first value
@@ -295,36 +292,39 @@ evaluateTileAgainstCameraPosition:
     ; arg3 = low byte of second value
 
     +
-    JMP checkRightForDrawingOffCamera
-    
+        JMP checkRightForDrawingOffCamera
     ++        
         DestroyObject
         LDA #$01        
         RTS
-checkRightForDrawingOffCamera
+
+    checkRightForDrawingOffCamera:
+
     LDA Object_x_hi,x
     CLC
     ADC self_right
     STA pointer
+
     LDA Object_screen,x
     ADC #$00
     AND #%00001111
     STA pointer+1
 
     LDA camX
-            
     STA pointer5
+
     LDA camX+1
-    clc
+    CLC
     ADC #$01
     STA temp
+
     Compare16 pointer+1, pointer, temp, pointer5; camX
     +
-    LDA #$01
-    rts
+        LDA #$01
+        RTS
     ++
-    LDA #$00
-    rts
+        LDA #$00
+        RTS
 
 ;; Lookup table to convert width/height to size in tiles (55 bytes)
 tblObjectSizeMatrix:
@@ -336,3 +336,4 @@ tblObjectSizeMatrix:
     .db 0,  5, 10, 15, 20, 25, 30, 35 ; 5
     .db 0,  6, 12, 18, 24, 30, 36, 42 ; 6
     .db 0,  7, 14, 21, 28, 35, 42, 49 ; 7
+

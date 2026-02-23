@@ -1,3 +1,4 @@
-   TXA 
-   STA temp
-   StartMoving temp, #LEFT
+
+       STX temp
+       StartMoving temp, #LEFT
+

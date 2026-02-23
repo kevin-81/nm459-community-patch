@@ -1,9 +1,6 @@
-;;;; 
-    STX temp ;; assumes the object we want to move is in x.
 
-        StartMoving temp, #UP
-     ;   TXA
-     ;   STA temp ;; assumes the object we want to move is in x.
-     ;   ChangeFacingDirection temp, #FACE_UP
- 
+    STX temp ;; assumes the object we want to move is in x.
+    StartMoving temp, #UP
+
     RTS
+
