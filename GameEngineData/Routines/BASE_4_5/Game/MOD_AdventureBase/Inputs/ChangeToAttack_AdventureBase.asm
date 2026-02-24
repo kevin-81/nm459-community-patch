@@ -1,176 +1,124 @@
-    ;; if you would like unlockable weapons, 
-    ;; that will be created with the b button
-    ;; use this code.
-  
-    LDA weaponsUnlocked
-    BNE +canCreateWeapon
-       LDY weaponChoice
-       LDA weaponChoiceTable,y
-       AND weaponsUnlocked
-       BNE +canCreateWeapon
-           RTS
-    +canCreateWeapon
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   ;END UNLOCKABLE WEAPONS
-   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    STX temp ;; assumes the object that we want is in x.
 
-    ChangeActionStep temp, #$02 ;; assumes that "attack" is in action 2
-    ;arg0 = what object?
-    ;arg1 = what behavior?
+;; Constants for melee attack script
+;; Weapon x and y pixel offsets and action steps
+
+WEAPON_POSITION_DOWN_X  = $00  ;; Player faces down
+WEAPON_POSITION_DOWN_Y  = $10  ;;
+WEAPON_DOWN_STATE       = $01  ;;
+
+WEAPON_POSITION_RIGHT_X = $10  ;; Player faces right
+WEAPON_POSITION_RIGHT_Y = $00  ;; 
+WEAPON_RIGHT_STATE      = $00  ;;
+
+WEAPON_POSITION_UP_X    = $00  ;; Player faces up
+WEAPON_POSITION_UP_Y    = $F0  ;;
+WEAPON_UP_STATE         = $01  ;;
+
+WEAPON_POSITION_LEFT_X  = $F0  ;; Player faces left
+WEAPON_POSITION_LEFT_Y  = $00  ;;
+WEAPON_LEFT_STATE       = $00  ;;
+
+
+    ;; Check if the selected weapon is unlocked and usable.
+    ;; If not, return.  
+    LDY weaponChoice
+    LDA weaponsUnlocked
+    AND weaponChoiceTable,y
+    BNE +canCreateWeapon
+        RTS
+    +canCreateWeapon:
+
+    ;; Store the selected weapon object ID into tempC
+    STA tempC
+
+    ;; Set object in attack mode
+    ;; - assumes the x-register to be the object slot
+    ;; - assumes #2 is the object's attack action step
+    STX temp
+    ChangeActionStep temp, #$02 
+
+    ;; Stop object from moving
     StopMoving temp, #$FF, #$00
-    
-    ;;; some constants for where to create the sword.
-    ;;; Constants do not take up any memory.
-        WEAPON_POSITION_RIGHT_X = #$10
-        WEAPON_POSITION_RIGHT_Y = #$00
-        WEAPON_POSITION_UP_X = #$00
-        WEAPON_POSITION_UP_Y = #$F0
-        WEAPON_POSITION_DOWN_X = #$00
-        WEAPON_POSITION_DOWN_Y = #$10
-        WEAPON_POSITION_LEFT_X = #$F0
-        WEAPON_POSITION_LEFT_Y = #$00
-        WEAPON_OBJECT = #$03
-        WEAPON_RIGHT_STATE = #$00
-        WEAPON_LEFT_STATE = #$00
-        WEAPON_UP_STATE = #$01
-        WEAPON_DOWN_STATE = #$01
-        
-        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-        ;; Now, we have to create the object.
-        ;; We will need to determine the direction
-        ;; of the player.
-        LDX player1_object
-        STX temp
-        GetObjectDirection temp ;; temp still observed from above.
-            ;;; this object's direction is now loaded into the 
-            ;;; accumulator for comparison after the macro.
-            ;; 0 = down
-            ;; 1 = downright
-            ;; 2 = right
-            ;; 3 = upright
-            ;; 4 = up
-            ;; 5 = upleft
-            ;; 6 = left
-            ;; 7 = downleft
-             BNE +notDown ;; jump if not equal to zero.
-                ;;; CREATE DOWN WEAPON
-                ;;; create an object for the weapon.
-                ;;; create it at the down positions.
-                ;;; create it with the down state
-            
-                LDX player1_object
-                LDA Object_x_hi,x
-                CLC
-                ADC #WEAPON_POSITION_DOWN_X
-                STA tempA
-                LDA Object_y_hi,x
-                CLC
-                ADC #WEAPON_POSITION_DOWN_Y
-                STA tempB
-                LDY weaponChoice
-                LDA weaponObjectTable,y
-                STA tempC
-               ;; use this is you want to always create a single object, based on
-                   ;; the constant above.
-                   ; CreateObject tempA, tempB, #WEAPON_OBJECT, #WEAPON_DOWN_STATE, currentNametable
-                 
-                   ;;; use this if you want to create a variable object based on 
-                   ;;; the weaponChoice varaible.
-                   CreateObject tempA, tempB, tempC, #WEAPON_DOWN_STATE, currentNametable
-                   
-                   LDA #%00110000
-                 STA Object_direction,x
-                 JMP +doneWithCreatingWeapon
-            +notDown
-                CMP #$02
-                BNE +notRight
-                ;;; CREATE RIGHT WEAPON
-                LDX player1_object
-                LDA Object_x_hi,x
-                CLC
-                ADC #WEAPON_POSITION_RIGHT_X
-                STA tempA
-                LDA Object_y_hi,x
-                CLC
-                ADC #WEAPON_POSITION_RIGHT_Y
-                STA tempB
-                    LDY weaponChoice
-                LDA weaponObjectTable,y
-                STA tempC
-               ;; use this is you want to always create a single object, based on
-                   ;; the constant above.
-                   ; CreateObject tempA, tempB, #WEAPON_OBJECT, #WEAPON_RIGHT_STATE, currentNametable
-                 
-                   ;;; use this if you want to create a variable object based on 
-                   ;;; the weaponChoice varaible.
-                   CreateObject tempA, tempB, tempC, #WEAPON_RIGHT_STATE, currentNametable
-                   LDA #%11000000
-                   STA Object_direction,x
-                   JMP +doneWithCreatingWeapon
-            +notRight
-            CMP #$04
-            BNE +notUp
-                ;;; CREATE UP WEAPON
-                LDX player1_object
-                LDA Object_x_hi,x
-                CLC
-                ADC #WEAPON_POSITION_UP_X
-                STA tempA
-                LDA Object_y_hi,x
-                CLC
-                ADC #WEAPON_POSITION_UP_Y
-                STA tempB
-                    LDY weaponChoice
-                LDA weaponObjectTable,y
-                STA tempC
-               ;; use this is you want to always create a single object, based on
-                   ;; the constant above.
-                   ; CreateObject tempA, tempB, #WEAPON_OBJECT, #WEAPON_DOWN_STATE, currentNametable
-                 
-                   ;;; use this if you want to create a variable object based on 
-                   ;;; the weaponChoice varaible.
-                   CreateObject tempA, tempB, tempC, #WEAPON_UP_STATE, currentNametable
-                 LDA #%00100000
-                 STA Object_direction,x
-                 JMP +doneWithCreatingWeapon
-            +notUp
-            CMP #$06
-            BNE +notLeft
-                ;;; CREATE LEFT WEAPON
-                LDX player1_object
-                LDA Object_x_hi,x
-                CLC
-                ADC #WEAPON_POSITION_LEFT_X
-                STA tempA
-                LDA Object_y_hi,x
-                CLC
-                ADC #WEAPON_POSITION_LEFT_Y
-                STA tempB
-                
-                    LDY weaponChoice
-                LDA weaponObjectTable,y
-                STA tempC
-               ;; use this is you want to always create a single object, based on
-                   ;; the constant above.
-                   ; CreateObject tempA, tempB, #WEAPON_OBJECT, #WEAPON_DOWN_STATE, currentNametable
-                 
-                   ;;; use this if you want to create a variable object based on 
-                   ;;; the weaponChoice varaible.
-                   CreateObject tempA, tempB, tempC, #WEAPON_LEFT_STATE, currentNametable
-                 LDA #%10000000
-                 STA Object_direction,x
-                 JMP +doneWithCreatingWeapon
-            +notLeft
-            
-        +doneWithCreatingWeapon  
-        
+
+    ;; Determine the facing direction of the player
+    GetObjectDirection player1_object
+    TAY
+
+    ;; The x-register now holds the value of the player slot
+    ;; The y-register holds the facing direction of the player
+
+    ;; Apply x-offset to weapon placement
+    LDA Object_x_hi,x
+    CLC
+    ADC weaponXOffsetTable,y
+    STA tempA
+
+    ;; Apply y-offset to weapon placement
+    LDA Object_y_hi,x
+    CLC
+    ADC weaponYOffsetTable,y
+    STA tempB
+
+    ;; Retrieve weapon action step based on facing direction
+    LDA weaponStateTable,y
+    STA tempD
+
+    ;; Get player direction, so we can apply it to the weapon
+    LDA Object_direction,x
+    STA temp1
+
+    ;; Create weapon object
+    CreateObject tempA, tempB, tempC, tempD
+
+    ;; Apply player direction to weapon
+    LDA temp1
+    STA Object_direction,x
+
+    ;; We're done!        
     RTS
-    
+
+
+;; Here are the lookup tables that work with this script.
+
+;; Bitmask table to check if weapon is unlocked yet
 weaponChoiceTable:
     .db #%00000001, #%00000010, #%00000100, #%00001000
     .db #%00010000, #%00100000, #%01000000, #%10000000
-    
-    
+
+;; Weapon slot to object ID mapping
 weaponObjectTable:
     .db #$03, #$06, #$03, #$03, #$03, #$03, #$03, #$03
+
+;; x-offset for weapon based on player facing direction
+weaponXOffsetTable:
+    .db WEAPON_POSITION_DOWN_X
+    .db WEAPON_POSITION_DOWN_X
+    .db WEAPON_POSITION_RIGHT_X
+    .db WEAPON_POSITION_RIGHT_X
+    .db WEAPON_POSITION_UP_X
+    .db WEAPON_POSITION_UP_X
+    .db WEAPON_POSITION_LEFT_X
+    .db WEAPON_POSITION_LEFT_X
+
+;; y-offset for weapon based on player facing direction
+weaponYOffsetTable:
+    .db WEAPON_POSITION_DOWN_Y
+    .db WEAPON_POSITION_DOWN_Y
+    .db WEAPON_POSITION_RIGHT_Y
+    .db WEAPON_POSITION_RIGHT_Y
+    .db WEAPON_POSITION_UP_Y
+    .db WEAPON_POSITION_UP_Y
+    .db WEAPON_POSITION_LEFT_Y
+    .db WEAPON_POSITION_LEFT_Y
+
+;; weapon action steps based on player facing direction
+weaponStateTable:
+    .db WEAPON_DOWN_STATE
+    .db WEAPON_DOWN_STATE
+    .db WEAPON_RIGHT_STATE
+    .db WEAPON_RIGHT_STATE
+    .db WEAPON_UP_STATE
+    .db WEAPON_UP_STATE
+    .db WEAPON_LEFT_STATE
+    .db WEAPON_LEFT_STATE
+
