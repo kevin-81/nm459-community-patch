@@ -105,20 +105,20 @@ doDrawText:
         ;; continue handling text after we're done handling these characters.
         CMP #$F6
         BNE +checkNext
-            .include ROOT\Game\CommonScripts\TextActions\drawVariableNumber.asm
+            .include ROOT\Game\TextActionScripts\drawVariableNumber.asm
             JMP +continueRoutine
         +checkNext:
 
         CMP #$F7
         BNE +checkNext
-            .include ROOT\Game\CommonScripts\TextActions\restoreFromLibrary.asm
+            .include ROOT\Game\TextActionScripts\restoreFromLibrary.asm
             JMP +continueRoutine
         +checkNext:
 
         LDA temp
         CMP #$F8
         BNE +checkNext
-            .include ROOT\Game\CommonScripts\TextActions\drawFromLibrary.asm
+            .include ROOT\Game\TextActionScripts\drawFromLibrary.asm
             ;JMP +continueRoutine
         +checkNext:
 
@@ -133,25 +133,25 @@ doDrawText:
 
         CMP #$F9 ; #_ENDTRIGGER
         BNE +checkNext
-            .include ROOT\Game\CommonScripts\TextActions\triggerScreen.asm
+            .include ROOT\Game\TextActionScripts\triggerScreen.asm
             JMP +endText
         +checkNext:
 
         CMP #$FA ; #_ENDWIN
         BNE +checkNext
-            .include ROOT\Game\CommonScripts\TextActions\endWin.asm
+            .include ROOT\Game\TextActionScripts\endWin.asm
             JMP +endText
         +checkNext:
 
         CMP #$FB ; #_ENDITEM
         BNE +checkNext
-            .include ROOT\Game\CommonScripts\TextActions\unlockItem.asm
+            .include ROOT\Game\TextActionScripts\unlockItem.asm
             JMP +endText
         +checkNext:
 
         CMP #$FC ; #_ENDSHOP
         BNE +checkNext
-            .include ROOT\Game\CommonScripts\TextActions\shopWarp.asm
+            .include ROOT\Game\TextActionScripts\shopWarp.asm
             JMP +endText
         +checkNext:
 
@@ -162,7 +162,7 @@ doDrawText:
         ;; routine.
         CMP #$FD ; #_MORE
         BNE +checkNext
-            .include ROOT\Game\CommonScripts\TextActions\moreText.asm
+            .include ROOT\Game\TextActionScripts\moreText.asm
             JMP +updateScreenData
         +checkNext:
 
@@ -173,7 +173,7 @@ doDrawText:
         ;; of the text by itself.
         CMP #$FE ; #_BREAK
         BNE +checkNext
-            .include ROOT\Game\CommonScripts\TextActions\newLineOfText.asm
+            .include ROOT\Game\TextActionScripts\newLineOfText.asm
             JMP +returnBank
         +checkNext:
 
