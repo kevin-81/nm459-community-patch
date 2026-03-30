@@ -5,29 +5,39 @@ doDrawText:
     TYA
     PHA
 
+    ;; If the text handler is zero, it means we have to yet start
+    ;; drawing text in the box. So we need to get the correct position
+    ;; on screen to start drawing first.
     LDA textHandler
-    BNE alreadyDrawingText
-        ;; setting up text.
-        
-        LDA arg2_hold ;; the x value, in metatiles, of the box draw.
-        ASL ;; multiplied by two, since metatiles are 16x16, but
-            ;; PPU addresses are 8x8.
+    BNE +continueDrawingText
+
+        ;; Text handler is zero
+
+        ;; Multiply the x-value of the starting text position by 2
+        ;; (to convert metatile units to tile unites)
+        LDA arg2_hold
+        ASL
         STA temp
 
-        LDA arg3_hold ;; the y value, in metatiles, of the box draw.
-        ASL ;; multiplied by two, since metatiles are 16x16, but
-            ;; PPU addresses are 8x8.
+        ;; Multiply the y-value of the starting text position by 2
+        ;; (to convert metatile units to tile unites)
+        LDA arg3_hold
+        ASL
         STA temp1
 
+        ;; Convert the (x,y) values of the text pointer to the
+        ;; corresponding PPU address (low byte)
         ASL
         ASL
         ASL
         ASL
         ASL
-        CLC 
+        CLC
         ADC temp
         STA textOffset_lo
 
+        ;; Convert the (x,y) values of the text pointer to the
+        ;; corresponding PPU address (high byte)
         LDA temp1
         LSR
         LSR
@@ -35,35 +45,39 @@ doDrawText:
         CLC
         ADC camFocus_tiles
         STA textOffset_hi
-        
-        LDA #$01
-        STA textHandler
 
+        ;; Increment the text handler so we can handle the first
+        ;; character of text directly
+        INC textHandler
+
+        ;; Reset the text character counter
         LDA #$00
         STA counter
-    alreadyDrawingText:
+    +continueDrawingText:
 
+    ;; Reset the scroll offset counter
     LDA #$00
     STA scrollOffsetCounter
 
+    ;; Switch to the text bank
     SwitchBank textBank
-        LDY #$00
 
+        ;; Store the PPU address to update into the PPU buffer
+        LDY #$00
         LDA textOffset_hi
         STA scrollUpdateRam,y
         INY
-
         LDA textOffset_lo
         STA scrollUpdateRam,y
         INY
 
+        ;; Store the text character into a temp variable.
+        ;; Also backup and restore the Y-register using the stack.
         TYA
         PHA
-
         LDY #$00
         LDA (textPointer),y
         STA temp
-
         PLA
         TAY
 
@@ -72,399 +86,174 @@ doDrawText:
         ;; Mostly, they add a value from HUD_CONSANTS.dat
         ;; that act as an opcode rather than a string value.
         ;; Since there are 256 values, there are many at the end that
-        ;; will never be used.  
+        ;; will never be used.
 
         ;; These are the ones that are default:
-        ;_BREAK = $FE
-        ;_END = $FF
-        ;_MORE = $FD
-        ;_ENDWIN = $FA
-        ;_ENDITEM = $FB
-        ;_ENDSHOP = $FC
-        ;_ENDTRIGGER = $F9
+        ;; _ENDTRIGGER = $F9
+        ;; _ENDWIN     = $FA
+        ;; _ENDITEM    = $FB
+        ;; _ENDSHOP    = $FC
+        ;; _MORE       = $FD
+        ;; _BREAK      = $FE
+        ;; _END        = $FF
 
-        ;;FOR MANUAL USE:
-        ;; Drawing from a library of values based on a numeric offset can be invoked by using F8.
+        ;; FOR MANUAL USE:
+        ;; Drawing from a library of values based on a numeric offset
+        ;; can be invoked by using F8.
+
+        ;; First we check for special characters #$F6-F8, because these have to
+        ;; continue handling text after we're done handling these characters.
+        CMP #$F6
+        BNE +checkNext
+            .include ROOT\Game\CommonScripts\TextActions\drawVariableNumber.asm
+            JMP +continueRoutine
+        +checkNext:
+
+        CMP #$F7
+        BNE +checkNext
+            .include ROOT\Game\CommonScripts\TextActions\restoreFromLibrary.asm
+            JMP +continueRoutine
+        +checkNext:
 
         LDA temp
         CMP #$F8
-        BNE +notDrawingFromLibrary
+        BNE +checkNext
+            .include ROOT\Game\CommonScripts\TextActions\drawFromLibrary.asm
+            ;JMP +continueRoutine
+        +checkNext:
 
-            TYA
-            PHA
 
-            ;; The library can have 256 values. Conceivably, you could make multiple
-            ;; libraries, and assign them to different end of text reads.
-            ;; So here is what this does.
-            ;; 
-            ;; 1) Reads an #$F8, so it knows to read from the library.
-            ;; 2) Increases position.  Gets the low value of var address to read
-            ;; 3) Increases position.  Gets the high value of var address to read.
-            ;;    Puts the result of var into Y.
-            ;; 3) Increases position and SAVES that program counter position.
-            ;; 4) Reads the y offest of library table.  That position becomes the
-            ;;    new textPointer location.
-            ;; 5) Writes as normal from that position.
-            ;; 6) If it reads #$F7, it turns off library draw (so every library read
-            ;;    should end in #$F7.
-            ;; 7) Saved program counter position gets restored to textPointer, and
-            ;     draw text continues on as normal.
-
-            LDA textPointer
-            CLC
-            ADC #$01
-            STA textPointer
-
-            LDA textPointer+1
-            ADC #$00
-            STA textPointer+1
-
-            LDY #$00
-            LDA (textPointer),y
-            STA pointer
-                
-            LDA textPointer
-            CLC
-            ADC #$01
-            STA textPointer
-
-            LDA textPointer+1
-            ADC #$00
-            STA textPointer+1
-
-            LDY #$00
-            LDA (textPointer),y
-            STA pointer+1
-                
-            LDY #$00
-            LDA (pointer),y
-            TAY ;; Y now represents the offset value from the Library pointer table
-                
-            ;; store next offset position for a return point.
-            LDA textPointer
-            CLC
-            ADC #$01
-            STA textPosHold 
-
-            LDA textPointer+1
-            ADC #$00
-            STA textPosHold+1
-                
-            ;; get the library table value
-            LDA TextLibrary_lo,y
-            STA textPointer
-
-            LDA TextLibrary_hi,y
-            STA textPointer+1
-
-            PLA
-            TAY
-
-            JMP +continueRoutine
-        +notDrawingFromLibrary:
-            CMP #$F7
-            BNE +notRestoringFromLibrary
-                TYA
-                PHA
-                ;; restorying from library.
-                LDA textPosHold
-                STA textPointer
-                LDA textPosHold+1
-                STA textPointer+1
-                LDY #$00
-                LDA (textPointer),y
-                STA temp ;; flow into the rest of the text routine.
-                PLA 
-                TAY
-                JMP +continueRoutine
-        +notRestoringFromLibrary:
-
-        ;; a value of F6 is an opcode that lets the game know to draw the value of a variable in a given position
-        ;; within a manual string.
-        ;; 1) First, we see it is an F6 opcode.
-        ;; 2) The next two bytes are the address of the variable that we want to read.
-        ;; 3) It pushes that to y as an offset to NumberBaseTable, and then continues on to the routine.
-
-        CMP #$F6
-        BNE +notDrawingVariableNumber
-            TYA
-            PHA
-
-            LDA textPointer
-            CLC
-            ADC #$01
-            STA textPointer
-
-            LDA textPointer+1
-            ADC #$00
-            STA textPointer+1
-
-            LDY #$00
-            LDA (textPointer),y
-            STA pointer
-                
-            LDA textPointer
-            CLC
-            ADC #$01
-            STA textPointer
-
-            LDA textPointer+1
-            ADC #$00
-            STA textPointer+1
-
-            LDY #$00
-            LDA (textPointer),y
-            STA pointer+1
-                
-            LDA (pointer),y
-            TAY
-
-            LDA #<NumberBaseTable
-            STA pointer
-
-            LDA #>NumberBaseTable
-            STA pointer+1
-
-            LDA (pointer),y
-            STA temp
-
-            PLA
-            TAY
-
-            JMP +continueRoutine
-        +notDrawingVariableNumber:
+        ;; After handling #$F6-F8, a new character is stored into `temp`. To
+        ;; continue the routine, we have to reload `temp` in the accumulator.
         +continueRoutine:
-
         LDA temp
-        CMP #$FF
-        BNE notEndOfText
-            endOfText:
 
-            ;; end of text
-            LDA #$00
-            STA textHandler
+        ;; #$F9-FC are text ending scripts. These JMP to +endText when they
+        ;; have been handled.
 
-            ;; cue turn off.
-            LDA textQueued
-            ORA #%00000010
-            STA textQueued ;; this will push a *turn off* notification.
-                
-            LDA gameStatusByte
-            AND #%11111101
-            STA gameStatusByte
-                    
-            JMP doneWithText
-        notEndOfText:
+        CMP #$F9 ; #_ENDTRIGGER
+        BNE +checkNext
+            .include ROOT\Game\CommonScripts\TextActions\triggerScreen.asm
+            JMP +endText
+        +checkNext:
 
-        CMP #$FE
-        BNE notNewLineOfText
-            ;; new line of text
-            ;; return to the leftmost side of the text string
-            ;; by subtracting "counter"
-            ;; then add #$20 (32), which jumps it to the next line.
-                
-            LDA textOffset_lo
-            SEC
-            SBC counter
-            CLC
-            ADC #$20
-            STA textOffset_lo
+        CMP #$FA ; #_ENDWIN
+        BNE +checkNext
+            .include ROOT\Game\CommonScripts\TextActions\endWin.asm
+            JMP +endText
+        +checkNext:
 
-            LDA textOffset_hi
-            ADC #$00
-            STA textOffset_hi
-                
-            ;; start 'counter' over again for the length of the current line
-            LDA #$00
-            STA counter
+        CMP #$FB ; #_ENDITEM
+        BNE +checkNext
+            .include ROOT\Game\CommonScripts\TextActions\unlockItem.asm
+            JMP +endText
+        +checkNext:
 
-            ;; increase the position of the text pointer to get the next offset
-            ;; value in the string.
-            LDA textPointer
-            CLC
-            ADC #$01
-            STA textPointer
+        CMP #$FC ; #_ENDSHOP
+        BNE +checkNext
+            .include ROOT\Game\CommonScripts\TextActions\shopWarp.asm
+            JMP +endText
+        +checkNext:
 
-            LDA textPointer+1
-            ADC #$00
-            STA textPointer+1
-        
-            JMP doneWithText
-        notNewLineOfText:
+        ;; #$FD is a "show more text" function, which shouldn't end the
+        ;; text box routine, but rather just update the screen data, so
+        ;; that it can continue handling the rest of the text. Therefore,
+        ;; after this script is handled, it JMPs to the +updateScreenData
+        ;; routine.
+        CMP #$FD ; #_MORE
+        BNE +checkNext
+            .include ROOT\Game\CommonScripts\TextActions\moreText.asm
+            JMP +updateScreenData
+        +checkNext:
 
-        CMP #_ENDTRIGGER
-        BNE notEndTrigger
-            LDA textPointer
-            CLC
-            ADC #$01
-            STA textPointer
-            
-            LDA textPointer+1
-            ADC #$00
-            STA textPointer+1
-            
-            ;; NOW, get the modifier 
-            TYA
-            PHA
+        ;; #$FE is a line break; this just updates the text pointer (the
+        ;; x,y position of the next character on screen) and should not
+        ;; output anything new. Therefore, after a new line, we JMP to
+        ;; the +returnBank routine so that the script can handle the rest
+        ;; of the text by itself.
+        CMP #$FE ; #_BREAK
+        BNE +checkNext
+            .include ROOT\Game\CommonScripts\TextActions\newLineOfText.asm
+            JMP +returnBank
+        +checkNext:
 
-            LDY #$00
-            LDA (textPointer),y
-            ;; accumulators now contains the trigger type
-            STA temp
-            TriggerScreen temp
+        ;; #$FF is the end of text handler. This just JMPs to +endText
+        ;; and has no additional actions. You can override this by changing
+        ;; the `.include` line below.
+        CMP #$FF ; #_END
+        BNE +checkNext
+            .include ROOT\Game\Subroutines\blank.asm
+            JMP +endText
+        +checkNext:
 
-            PLA
-            TAY
-            LDA #$00
-            STA textHandler
 
-            JMP endOfText
-        notEndTrigger:
+        ;; Additional special character checks can go here, like this:
+        ;;  CMP #$..
+        ;;  BNE +checkNext
+        ;;      .include Path\To\TextActionScript.asm
+        ;;  +checknext:
 
-        ;; "Open Shop" -> warp
-        CMP #_ENDSHOP
-        BNE +notEndShop
-            LDA textPointer
-            CLC
-            ADC #$01
-            STA textPointer
 
-            LDA textPointer+1
-            ADC #$00
-            STA textPointer+1
-
-            ;; "open shop" warps:
-            LDA textQueued
-            ORA #%00000100 ;; text warps
-            STA textQueued
-
-            LDA #$00
-            STA textHandler
-
-            JMP endOfText
-        +notEndShop:
-
-        CMP #_MORE
-        BNE notMoreText
-            ;; There is more text.
-            ;; so first, we need to clear the text field.
-            ;; We will set up a queue for drawing a new black box and then more text.
-            LDA textQueued
-            ORA #%00000001
-            STA textQueued
-
-            ;; now, increase the text value so that it will read from the very next
-            ;; value when a new box is created.
-            LDA textOffset_lo
-            CLC
-            ADC #$02
-            STA textOffset_lo
-
-            LDA textOffset_hi
-            ADC #$00
-            STA textOffset_hi
-
-            ;; Also, add a "MORE" indicator after finished text.
-            LDA textPointer
-            CLC
-            ADC #$01
-            STA textPointer
-
-            LDA textPointer+1
-            ADC #$00
-            STA textPointer+1
-
-            LDA #$00
-            STA textHandler
-                
-            LDA #TEXT_MORE_INDICATOR
-            STA temp
-                
-            CLC
-            ADC #HUD_OFFSET
-            STA scrollUpdateRam,y
-            INY
-
-            STY maxScrollOffsetCounter
-                
-            INC counter ;; we will use counter for "length" of the current line.
-
-            LDA gameStatusByte
-            AND #%11111101
-            STA gameStatusByte
-
-            JMP JustUpdateNewCharacter
-        notMoreText:
-
-        CMP #_ENDITEM
-        BNE notEndItem
-            ;; is end item.
-            LDA textPointer
-            CLC
-            ADC #$01
-            STA textPointer
-
-            LDA textPointer+1
-            ADC #$00
-            STA textPointer+1
-
-            LDY #$00
-            LDA (textPointer),y
-            ;; now A holds the "item to get".
-
-            TAY
-
-            LDA ValToBitTable_inverse,y
-            ORA weaponsUnlocked
-            STA weaponsUnlocked
-
-            TriggerScreen currentNametable
-
-            JMP endOfText
-        notEndItem:
-        updateNormalTextCharacter:
-
+        ;; Add normal text character graphic to the PPU buffer
         LDA temp
         CLC
         ADC #HUD_OFFSET
         STA scrollUpdateRam,y
         INY
 
+        ;; Update the max offset scroll counter
         STY maxScrollOffsetCounter
-            
-        INC counter ;; we will use counter for "length" of the current line.
-            
-        LDA textOffset_lo
-        CLC
-        ADC #$01
-        STA textOffset_lo
 
-        LDA textOffset_hi
-        ADC #$00
-        STA textOffset_hi
-            
-        LDA textPointer
-        CLC
-        ADC #$01
-        STA textPointer
+        ;; Increment counter; we will use counter to keep track of the
+        ;; length of the current line
+        INC counter
 
-        LDA textPointer+1
-        ADC #$00
-        STA textPointer+1
+        ;; Update the 16-bit text offset value
+        INC textOffset_lo
+        BNE +
+            INC textOffset_hi
+        +
 
-        JustUpdateNewCharacter:
+        ;; Update the 16-bit text pointer value
+        INC textPointer
+        BNE +
+            INC textPointer+1
+        +
 
-        LDA updateScreenData
-        ORA #%00000100
-        STA updateScreenData
+        ;; Tell game to update the PPU buffer for the next frame
+        +updateScreenData:
+            LDA updateScreenData
+            ORA #%00000100
+            STA updateScreenData
+            JMP +returnBank
 
-        doneWithText:
+        ;; Handle the end of the text stream
+        +endText:
+            ;; Reset text handler
+            LDA #$00
+            STA textHandler
+
+            ;; Cue "turn off"
+            LDA textQueued
+            ORA #%00000010
+            STA textQueued
+
+            ;; Unset bit-1 of game status byte
+            ;; @TODO find gameStatusByte in NESMaker UI and update description
+            LDA gameStatusByte
+            AND #%11111101
+            STA gameStatusByte
+
+        ;; Switch back to previous bank
+        +returnBank:
     ReturnBank
 
+    ;; Pull original X- and Y-register values from stack
     PLA
     TAY
     PLA
     TAX
 
+    ;; Return
     RTS
 
