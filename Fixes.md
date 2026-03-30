@@ -32,6 +32,7 @@ _Here's a list of patches that have been applied, in no particular order, groupe
 - Added UI option to hide the sprite HUD by default
 - Simplified inputs for all modules, by crazygrouptrio and B-Board
 - Removed unused constants
+- Moved timer end scripts and special text character scripts to separate files to increase engine flexibility
 - Refactoring of script files (work in progress)
 
 ## Optimizations
