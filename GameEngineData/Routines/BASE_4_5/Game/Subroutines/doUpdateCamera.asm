@@ -490,6 +490,8 @@ doUpdateCamera:
             LDY #182
             LDA (pointer2),y
             STA ScreenFlags01
+
+            .include ROOT\Game\Common\userScreenBytes_scrolling.asm
         +skipUpdatingScreenFlags:
     ReturnBank
     

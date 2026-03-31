@@ -108,7 +108,9 @@ doLoadScreenData:
         LDY #182
         LDA (collisionPointer),y
         STA ScreenFlags01
-        
+
+        .include ROOT\Game\Common\userScreenBytes.asm
+
         ;; #196 - Tile layout
         LDY #196
         LDA (collisionPointer),y
