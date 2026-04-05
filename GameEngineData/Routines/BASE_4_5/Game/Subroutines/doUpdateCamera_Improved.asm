@@ -724,7 +724,7 @@ getCamSeam:
             LDA (temp16),y
             STA ScreenFlags01
 
-            .include ROOT\Game\Common\userScreenBytes_scrolling.asm
+            .include ROOT\Game\CommonScripts\userScreenBytes_scrolling.asm
             
             LDY #125 ;
             LDA (temp16),y

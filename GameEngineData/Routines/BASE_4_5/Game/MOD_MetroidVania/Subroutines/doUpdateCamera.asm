@@ -103,7 +103,7 @@ doUpdateCamera:
         LDA (temp16),y
         STA ScreenFlags00
 
-        .include ROOT\Game\Common\userScreenBytes_scrolling.asm
+        .include ROOT\Game\CommonScripts\userScreenBytes_scrolling.asm
     ReturnBank
     
     LDA scrollByte
