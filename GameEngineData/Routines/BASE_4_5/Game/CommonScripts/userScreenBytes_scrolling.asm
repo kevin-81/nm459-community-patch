@@ -3,66 +3,62 @@
 ;; just adding them to either Zero Page or Overflow RAM.
 
 
+.ifdef userScreenByte0
     ;; #187 - User Screen Byte 0
     LDY #187
-
-.ifdef userScreenByte0
     LDA (temp16),y
     STA userScreenByte0
 .endif
 
-    ;; #188 - User Screen Byte 1
-    INY
 
 .ifdef userScreenByte1
+    ;; #188 - User Screen Byte 1
+    LDY #188
     LDA (temp16),y
     STA userScreenByte1
 .endif
 
-    ;; #189 - User Screen Byte 2
-    INY
-
 .ifdef userScreenByte2
+    ;; #189 - User Screen Byte 1
+    LDY #189
     LDA (temp16),y
     STA userScreenByte2
 .endif
 
-    ;; #190 - User Screen Byte 3
-    INY
-
 .ifdef userScreenByte3
+    ;; #190 - User Screen Byte 3
+    LDY #190
     LDA (temp16),y
     STA userScreenByte3
 .endif
 
-    ;; #191 - User Screen Byte 4
-    INY
 
 .ifdef userScreenByte4
+    ;; #191 - User Screen Byte 4
+    LDY #191
     LDA (temp16),y
     STA userScreenByte4
 .endif
 
-;; #192 - User Screen Byte 5
-INY
 
 .ifdef userScreenByte5
+    ;; #192 - User Screen Byte 5
+    LDY #192
     LDA (temp16),y
     STA userScreenByte5
 .endif
 
-;; #193 - User Screen Byte 6
-INY
 
 .ifdef userScreenByte6
+    ;; #193 - User Screen Byte 6
+    LDY #193
     LDA (temp16),y
     STA userScreenByte6
 .endif
 
-    ;; #194 - User Screen Byte 7
-    INY
-
 .ifdef userScreenByte7
+    ;; #194 - User Screen Byte 7
+    LDY #194
     LDA (temp16),y
     STA userScreenByte7
 .endif
