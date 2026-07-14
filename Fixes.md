@@ -59,3 +59,4 @@ _Here's a list of patches that have been applied, in no particular order, groupe
 - Diagonal movement options for the Adventure module
 - Added variable to limit projectiles per screen
 - [Arbitrary Bankswitch](https://www.nesmakers.com/index.php?threads/arbitrary-bankswitch.8271/), by JamesNES
+- 6-point and 8-point versions of the tile collision routine
