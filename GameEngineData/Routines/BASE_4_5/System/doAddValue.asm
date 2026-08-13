@@ -4,7 +4,7 @@ doAddValue:
     PHA
     ;arg0 = how many places this value has.
     ;arg1 = home variable
-    ;arg2 = amount to add 
+    ;arg2 = amount to add
     ;arg3 = to what place?
     LDX arg0_hold
     --:
@@ -12,11 +12,11 @@ doAddValue:
         STA value,x
         dex
         BPL --
-    LDX arg3_hold ; sets the place to push.  
+    LDX arg3_hold ; sets the place to push.
     LDA arg2_hold
     JSR valueAddLoop ;value_add1 ;; will add what is in accumulator.
     ;;; now value nees to be unpacked back into the variable.
-    
+
 
         LDX arg0_hold
     -:
@@ -27,8 +27,8 @@ doAddValue:
     PLA
     TAX
     RTS
-    
-    
+
+
 valueAddLoop:
     ;; the accumulator holds how much to add by.
     ;; x holds what place is being added to.

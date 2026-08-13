@@ -1,7 +1,7 @@
 
-    
 
-    
+
+
 valueAddLoop:
     ;; the accumulator holds how much to add by.
     ;; x holds what place is being added to.
@@ -26,7 +26,7 @@ overflowThisNumber:
 valueSubLoop:
     ;; temp holds the value to subtract.
     lda value,x
-    sec 
+    sec
     sbc temp
     cmp #$00
     bpl skipCarryDecValue2
